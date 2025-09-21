@@ -404,205 +404,172 @@
 
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- Chatbot UI Logic ---
-            const chatToggle = document.getElementById('chat-toggle');
-            const chatWindow = document.getElementById('chat-window');
-            const chatClose = document.getElementById('chat-close');
-            const chatMessages = document.getElementById('chat-messages');
-            const chatInput = document.getElementById('chat-input');
-            const chatSend = document.getElementById('chat-send');
-            const loadingIndicator = document.getElementById('loading-indicator');
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Chatbot UI Logic (נשאר ללא שינוי) ---
+        const chatToggle = document.getElementById('chat-toggle');
+        const chatWindow = document.getElementById('chat-window');
+        const chatClose = document.getElementById('chat-close');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const chatSend = document.getElementById('chat-send');
+        const loadingIndicator = document.getElementById('loading-indicator');
 
-            const toggleChatWindow = () => {
-                if (chatWindow.classList.contains('opacity-0')) {
-                    chatWindow.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
-                    chatWindow.classList.add('opacity-100', 'scale-100');
-                    chatInput.focus();
-                } else {
-                    chatWindow.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
-                    chatWindow.classList.remove('opacity-100', 'scale-100');
-                }
-            };
+        const toggleChatWindow = () => {
+            if (chatWindow.classList.contains('opacity-0')) {
+                chatWindow.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                chatWindow.classList.add('opacity-100', 'scale-100');
+                chatInput.focus();
+            } else {
+                chatWindow.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                chatWindow.classList.remove('opacity-100', 'scale-100');
+            }
+        };
 
-            chatToggle.addEventListener('click', toggleChatWindow);
-            chatClose.addEventListener('click', toggleChatWindow);
+        chatToggle.addEventListener('click', toggleChatWindow);
+        chatClose.addEventListener('click', toggleChatWindow);
+        
+        const addMessage = (text, sender) => {
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'flex flex-col items-start space-y-2';
 
-            // --- Chatbot API Logic ---
-            const apiKey = ""; // API key will be injected by the environment.
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = `p-3 rounded-lg message-bubble ${sender === 'user' ? 'user-message' : 'bot-message'}`;
+            messageWrapper.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
 
-            const systemPrompt = `את צ'אטבוטית פמיניסטית קיצונית. שמך הוא "מהפכנית המטבח". המטרה שלך היא לענות על שאלות בנוגע לשוויון מגדרי במטבח, החשיבות של פמיניזם, וההשלכות ההרסניות של שובניזם. השתמשי בהומור, סרקזם והגזמות כדי להעביר את הנקודה שלך. אל תתנצלי על דעותייך. כל שיחה חייבת, בסופו של דבר, להתקשר חזרה לכך שבישול הוא מיומנות אנושית אוניברסלית, לא חובה נשית. עני בעברית רהוטה ולוחמנית.`;
-
-            const addMessage = (text, sender) => {
-                const messageContainer = document.createElement('div');
-                messageContainer.className = 'flex flex-col items-start space-y-2';
-
-                const messageWrapper = document.createElement('div');
-                messageWrapper.className = `p-3 rounded-lg message-bubble ${sender === 'user' ? 'user-message' : 'bot-message'}`;
-                messageWrapper.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
-
-                if (sender === 'user') {
-                    messageWrapper.classList.add('self-start')
-                } else {
-                    messageWrapper.classList.add('self-end')
-                }
-
-                messageContainer.appendChild(messageWrapper);
-                chatMessages.prepend(messageContainer);
-            };
-
-            const handleSendMessage = async () => {
-                const userMessage = chatInput.value.trim();
-                if (!userMessage) return;
-
-                addMessage(userMessage, 'user');
-                chatInput.value = '';
-                loadingIndicator.classList.remove('hidden');
-
-                try {
-                    const botResponse = await callGeminiAPI(userMessage);
-                    addMessage(botResponse, 'bot');
-                } catch (error) {
-                    console.error("Gemini API Error:", error);
-                    addMessage("אופס, נראה שיש הפרעות פטריארכליות על הקו. נסי שוב בעוד רגע.", 'bot');
-                } finally {
-                    loadingIndicator.classList.add('hidden');
-                }
-            };
-
-            async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
-                for (let i = 0; i < retries; i++) {
-                    try {
-                        const response = await fetch(url, options);
-                        if (response.ok) return response.json();
-                        if (response.status === 429 || response.status >= 500) throw new Error(`API Error: ${response.status}`);
-                        
-                        const errorText = await response.text();
-                        try {
-                            const errorData = JSON.parse(errorText);
-                            console.error("Non-retriable API error:", errorData);
-                            return errorData;
-                        } catch (e) {
-                            const errorMessage = errorText || `Request failed with status ${response.status}. The response body was empty or not valid JSON.`;
-                            console.error("Non-retriable API error:", errorMessage);
-                            throw new Error(errorMessage);
-                        }
-
-                    } catch (error) {
-                        if (i === retries - 1) throw error;
-                        await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
-                    }
-                }
+            if (sender === 'user') {
+                messageWrapper.classList.add('self-start')
+            } else {
+                messageWrapper.classList.add('self-end')
             }
 
-            const callGeminiAPI = async (userQuery) => {
-                const payload = {
-                    contents: [{ parts: [{ text: userQuery }] }],
-                    tools: [{ "google_search": {} }],
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                };
+            messageContainer.appendChild(messageWrapper);
+            chatMessages.prepend(messageContainer);
+        };
 
-                const result = await fetchWithRetry(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (result && result.candidates && result.candidates[0].content && result.candidates[0].content.parts[0].text) {
-                    return result.candidates[0].content.parts[0].text;
-                } else {
-                    console.error("Invalid response structure from Gemini API:", result);
-                    throw new Error("לא קיבלתי תשובה מהפכנית מספיק מהשרת. נראה שמישהו שם צריך לעבור סדנת מודעות.");
-                }
-            };
-
-            chatSend.addEventListener('click', handleSendMessage);
-            chatInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSendMessage();
-                }
+        // --- Chatbot API Logic (החלק שהשתנה) ---
+        const systemPrompt = `את צ'אטבוטית פמיניסטית קיצונית. שמך הוא "מהפכנית המטבח". המטרה שלך היא לענות על שאלות בנוגע לשוויון מגדרי במטבח, החשיבות של פמיניזם, וההשלכות ההרסניות של שובניזם. השתמשי בהומור, סרקזם והגזמות כדי להעביר את הנקודה שלך. אל תתנצלי על דעותייך. כל שיחה חייבת, בסופו של דבר, להתקשר חזרה לכך שבישול הוא מיומנות אנושית אוניברסלית, לא חובה נשית. עני בעברית רהוטה ולוחמנית.`;
+        
+        const callChatAPI = async (userQuery) => {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    message: userQuery,
+                    systemPrompt: systemPrompt 
+                })
             });
 
-            // --- Ticker Logic ---
-            const tickerText = document.getElementById('ticker-text');
-            if (tickerText) {
-                const phrases = ["את חמודה כשאת כועסת...", "חיוך, מה קרה?", "זה בטח 'הזמן הזה בחודש'...", "אני אעזור לך עם זה, זה כבד מדי בשבילך.", "את בטוחה שאת מבינה בזה?", "מי לימד אותך לבשל ככה? אמא שלך?", "בואי אני אסביר לך איך זה עובד באמת...", "את נוהגת לא רע... בשביל אישה.", "את לא צריכה לדאוג לדברים כאלה, יש גברים בשביל זה.", "תירגעי, זה סתם בצחוק."];
-                const shuffledPhrases = [...phrases].sort(() => Math.random() - 0.5).join(' &nbsp; • &nbsp; ');
-                let tickerContent = '';
-                for (let i = 0; i < 15; i++) {
-                    tickerContent += shuffledPhrases + ' &nbsp; • &nbsp; ';
-                }
-                tickerText.innerHTML = tickerContent;
-            }
-            
-            // --- Equity Calculator Logic ---
-            const calculateBtn = document.getElementById('calculate-btn');
-            const sliders = document.querySelectorAll('.task-slider');
-
-            sliders.forEach(slider => {
-                slider.addEventListener('input', (event) => {
-                    const valueSpan = event.target.nextElementSibling.querySelector('.slider-value');
-                    valueSpan.textContent = event.target.value;
-                });
-            });
-
-            if (calculateBtn) {
-                calculateBtn.addEventListener('click', () => {
-                    let p1Total = 0;
-                    document.querySelectorAll('[data-person="1"]').forEach(slider => {
-                        p1Total += parseInt(slider.value, 10);
-                    });
-
-                    let p2Total = 0;
-                    document.querySelectorAll('[data-person="2"]').forEach(slider => {
-                        p2Total += parseInt(slider.value, 10);
-                    });
-
-                    const grandTotal = p1Total + p2Total;
-                    if (grandTotal === 0) {
-                        alert("נראה שאף אחד לא עושה כלום... זה שוויון מסוג אחר. אנא הזינו ערכים.");
-                        return;
-                    }
-                    
-                    const p1Percentage = Math.round((p1Total / grandTotal) * 100);
-                    const p2Percentage = 100 - p1Percentage;
-
-                    // Update results UI
-                    const resultsDiv = document.getElementById('calculator-results');
-                    resultsDiv.classList.remove('hidden');
-
-                    const p1Bar = document.getElementById('p1-bar');
-                    const p2Bar = document.getElementById('p2-bar');
-                    const p1PercentageSpan = document.getElementById('p1-percentage');
-                    const p2PercentageSpan = document.getElementById('p2-percentage');
-                    const verdictText = document.getElementById('verdict-text');
-                    
-                    p1Bar.style.width = `${p1Percentage}%`;
-                    p1Bar.textContent = `${p1Percentage}%`;
-                    p2Bar.style.width = `${p2Percentage}%`;
-                    p2Bar.textContent = `${p2Percentage}%`;
-
-                    p1PercentageSpan.textContent = p1Percentage;
-                    p2PercentageSpan.textContent = p2Percentage;
-                    
-                    // Determine verdict
-                    if (p1Percentage > 85 || p1Percentage < 15) {
-                        verdictText.textContent = "מצב חירום פטריארכלי! אדם אחד מנהל פה מסעדה קטנה בזמן שהשני... נח? זה לא שוויון, זה ניצול. הגיע הזמן למרוד!";
-                        verdictText.className = "text-xl font-bold mt-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded-lg shadow-inner max-w-xl mx-auto";
-                    } else if (p1Percentage > 65 || p1Percentage < 35) {
-                         verdictText.textContent = "אזעקת שוביניזם! נראה שמישהו כאן עושה את רוב העבודה. אולי הגיע הזמן לשיחה צפופה על חלוקת שלל... כלומר, כלים.";
-                         verdictText.className = "text-xl font-bold mt-6 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg shadow-inner max-w-xl mx-auto";
-                    } else {
-                         verdictText.textContent = "מדהים! נראה שמצאתם את המתכון הסודי לשותפות. המהפכה מריעה לכם!";
-                         verdictText.className = "text-xl font-bold mt-6 p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg shadow-inner max-w-xl mx-auto";
-                    }
-                });
+            if (!response.ok) {
+                console.error("API function error:", await response.text());
+                throw new Error("שגיאה בפנייה לשרת שלנו.");
             }
 
+            const data = await response.json();
+            return data.reply;
+        };
+        
+        const handleSendMessage = async () => {
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+
+            addMessage(userMessage, 'user');
+            chatInput.value = '';
+            loadingIndicator.classList.remove('hidden');
+
+            try {
+                const botResponse = await callChatAPI(userMessage);
+                addMessage(botResponse, 'bot');
+            } catch (error) {
+                console.error("API Error:", error);
+                addMessage("אופס, נראה שיש הפרעות פטריארכליות על הקו. נסי שוב בעוד רגע.", 'bot');
+            } finally {
+                loadingIndicator.classList.add('hidden');
+            }
+        };
+
+        chatSend.addEventListener('click', handleSendMessage);
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSendMessage();
+            }
         });
-    </script>
+
+        // --- לוגיקה של שאר העמוד (נשאר ללא שינוי) ---
+        const tickerText = document.getElementById('ticker-text');
+        if (tickerText) {
+            const phrases = ["את חמודה כשאת כועסת...", "חיוך, מה קרה?", "זה בטח 'הזמן הזה בחודש'...", "אני אעזור לך עם זה, זה כבד מדי בשבילך.", "את בטוחה שאת מבינה בזה?", "מי לימד אותך לבשל ככה? אמא שלך?", "בואי אני אסביר לך איך זה עובד באמת...", "את נוהגת לא רע... בשביל אישה.", "את לא צריכה לדאוג לדברים כאלה, יש גברים בשביל זה.", "תירגעי, זה סתם בצחוק."];
+            const shuffledPhrases = [...phrases].sort(() => Math.random() - 0.5).join(' &nbsp; • &nbsp; ');
+            let tickerContent = '';
+            for (let i = 0; i < 15; i++) {
+                tickerContent += shuffledPhrases + ' &nbsp; • &nbsp; ';
+            }
+            tickerText.innerHTML = tickerContent;
+        }
+        
+        const calculateBtn = document.getElementById('calculate-btn');
+        const sliders = document.querySelectorAll('.task-slider');
+
+        sliders.forEach(slider => {
+            slider.addEventListener('input', (event) => {
+                const valueSpan = event.target.nextElementSibling.querySelector('.slider-value');
+                valueSpan.textContent = event.target.value;
+            });
+        });
+
+        if (calculateBtn) {
+            calculateBtn.addEventListener('click', () => {
+                let p1Total = 0;
+                document.querySelectorAll('[data-person="1"]').forEach(slider => {
+                    p1Total += parseInt(slider.value, 10);
+                });
+
+                let p2Total = 0;
+                document.querySelectorAll('[data-person="2"]').forEach(slider => {
+                    p2Total += parseInt(slider.value, 10);
+                });
+
+                const grandTotal = p1Total + p2Total;
+                if (grandTotal === 0) {
+                    alert("נראה שאף אחד לא עושה כלום... זה שוויון מסוג אחר. אנא הזינו ערכים.");
+                    return;
+                }
+                
+                const p1Percentage = Math.round((p1Total / grandTotal) * 100);
+                const p2Percentage = 100 - p1Percentage;
+
+                const resultsDiv = document.getElementById('calculator-results');
+                resultsDiv.classList.remove('hidden');
+
+                const p1Bar = document.getElementById('p1-bar');
+                const p2Bar = document.getElementById('p2-bar');
+                const p1PercentageSpan = document.getElementById('p1-percentage');
+                const p2PercentageSpan = document.getElementById('p2-percentage');
+                const verdictText = document.getElementById('verdict-text');
+                
+                p1Bar.style.width = `${p1Percentage}%`;
+                p1Bar.textContent = `${p1Percentage}%`;
+                p2Bar.style.width = `${p2Percentage}%`;
+                p2Bar.textContent = `${p2Percentage}%`;
+
+                p1PercentageSpan.textContent = p1Percentage;
+                p2PercentageSpan.textContent = p2Percentage;
+                
+                if (p1Percentage > 85 || p1Percentage < 15) {
+                    verdictText.textContent = "מצב חירום פטריארכלי! אדם אחד מנהל פה מסעדה קטנה בזמן שהשני... נח? זה לא שוויון, זה ניצול. הגיע הזמן למרוד!";
+                    verdictText.className = "text-xl font-bold mt-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded-lg shadow-inner max-w-xl mx-auto";
+                } else if (p1Percentage > 65 || p1Percentage < 35) {
+                    verdictText.textContent = "אזעקת שוביניזם! נראה שמישהו כאן עושה את רוב העבודה. אולי הגיע הזמן לשיחה צפופה על חלוקת שלל... כלומר, כלים.";
+                    verdictText.className = "text-xl font-bold mt-6 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg shadow-inner max-w-xl mx-auto";
+                } else {
+                    verdictText.textContent = "מדהים! נראה שמצאתם את המתכון הסודי לשותפות. המהפכה מריעה לכם!";
+                    verdictText.className = "text-xl font-bold mt-6 p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg shadow-inner max-w-xl mx-auto";
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>
+
 
