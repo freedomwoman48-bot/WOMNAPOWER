@@ -95,12 +95,6 @@
             cursor: pointer;
             border-radius: 50%;
         }
-        /* Additional styles for prose output from AI */
-        .prose br {
-            display: block;
-            content: "";
-            margin-top: 0.5em;
-        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -283,31 +277,6 @@
             </div>
         </section>
 
-        <!-- AI Recipe Book Section -->
-        <section id="ai-recipe-generator" class="bg-slate-100 rounded-lg p-8 md:p-12 mb-16 fade-in" style="animation-delay: 900ms;">
-            <h2 class="text-3xl font-bold text-center mb-8 text-rose-600">ספר המתכונים המהפכני</h2>
-            <p class="text-center max-w-3xl mx-auto mb-10">
-                תקוע/ה עם שאריות במקרר ואין לך מושג מה להכין? הפטריארכיה רוצה שתזמיני טייקאווי. אנחנו אומרות: הפיכי את הכאוס ליצירה! רשמי/י את המצרכים שיש לך, והשפית המהפכנית שלנו תייצר עבורך מתכון שיערער את הסדר הקיים.
-            </p>
-            <div class="max-w-2xl mx-auto">
-                <div class="flex flex-col sm:flex-row gap-2">
-                    <input type="text" id="ingredients-input" placeholder="לדוגמה: עגבניות, בצל, שום, פסטה..." class="flex-1 p-3 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500 text-lg">
-                    <button id="generate-recipe-btn" class="bg-rose-500 text-white font-bold py-3 px-6 rounded-md text-lg hover:bg-rose-600 transition-colors shadow-lg flex items-center justify-center min-w-[150px]">
-                        <span id="btn-text">צרי מתכון!</span>
-                        <span id="btn-loader" class="hidden">
-                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        </span>
-                    </button>
-                </div>
-            </div>
-            <div id="recipe-output" class="mt-10 bg-white p-6 md:p-8 rounded-lg shadow-inner hidden prose max-w-none">
-                <!-- Generated recipe will appear here -->
-            </div>
-        </section>
-
         <!-- Starter Kit Section -->
         <section class="mb-16 fade-in" style="animation-delay: 1000ms;">
             <h2 class="text-3xl font-bold text-center mb-8 text-rose-600">ערכת התחלה למהפכן המטבח</h2>
@@ -315,7 +284,12 @@
                 <!-- Kit Item 1 -->
                 <div class="bg-white p-6 rounded-lg shadow-lg border border-slate-200 flex items-center gap-4 hover:shadow-xl transition-shadow">
                     <div class="flex-shrink-0 h-16 w-16 bg-rose-100 rounded-full flex items-center justify-center">
-                         <svg class="h-8 w-8 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                         <svg class="h-8 w-8 text-rose-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 17.25h16.5" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 8.25c0-1.24.984-2.25 2.188-2.25h12.124c1.204 0 2.188 1.01 2.188 2.25v7.5c0 1.24-.984-2.25-2.188 2.25H5.938c-1.204 0-2.188-1.01-2.188-2.25v-7.5z" />
+                         </svg>
                     </div>
                     <div>
                         <h3 class="font-bold text-xl mb-1">סינר העלמות</h3>
@@ -386,7 +360,7 @@
 
     </main>
 
-    <!-- UI Buttons -->
+    <!-- Chatbot -->
     <div id="chatbot-container" class="fixed bottom-20 left-5 z-50">
         <!-- Chat toggle button -->
         <button id="chat-toggle" class="bg-rose-500 text-white rounded-full p-4 shadow-lg hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-transform hover:scale-110">
@@ -399,15 +373,15 @@
         <div id="chat-window" class="absolute bottom-20 left-0 w-80 sm:w-96 h-[500px] bg-white rounded-lg shadow-2xl flex flex-col transform scale-95 opacity-0 pointer-events-none">
             <header class="bg-rose-500 text-white p-4 rounded-t-lg flex justify-between items-center">
                 <h3 class="font-bold text-lg">שאל/י את מהפכנית המטבח</h3>
-                <button id="chat-close" class="text-white hover:text-rose-200 text-3xl leading-none">&times;</button>
+                <button id="chat-close" class="text-white hover:text-rose-200">&times;</button>
             </header>
             <div id="chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col-reverse">
                 <!-- Messages will be appended here -->
                  <div class="flex flex-col items-end space-y-2">
-                     <div class="bot-message p-3 rounded-lg message-bubble">
-                         <p>שלום! אני כאן כדי לנפץ תקרות זכוכית וקליפות ביצים. במה אוכל לעזור לך לחולל מהפכה במטבח היום?</p>
-                     </div>
-                 </div>
+                    <div class="bot-message p-3 rounded-lg message-bubble">
+                        <p>שלום! אני כאן כדי לנפץ תקרות זכוכית וקליפות ביצים. במה אוכל לעזור לך לחולל מהפכה במטבח היום?</p>
+                    </div>
+                </div>
             </div>
             <div id="loading-indicator" class="p-4 text-center hidden">
                 <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-rose-500 mx-auto"></div>
@@ -428,30 +402,9 @@
         <p id="ticker-text"></p>
     </footer>
 
+
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            let apiKey = ''; // Will hold the key
-
-            // --- Function to fetch API key from the serverless function ---
-            const fetchApiKey = async () => {
-                try {
-                    const response = await fetch('/api/get-key');
-                    if (!response.ok) {
-                        throw new Error(`Server responded with ${response.status}`);
-                    }
-                    const data = await response.json();
-                    if (data.apiKey) {
-                        apiKey = data.apiKey;
-                    } else {
-                        console.error("API key not provided by the server endpoint.");
-                    }
-                } catch (error) {
-                    console.error("Error fetching API key:", error);
-                }
-            };
-            
-            await fetchApiKey(); // Fetch the key when the page loads
-
+        document.addEventListener('DOMContentLoaded', () => {
             // --- Chatbot UI Logic ---
             const chatToggle = document.getElementById('chat-toggle');
             const chatWindow = document.getElementById('chat-window');
@@ -475,22 +428,11 @@
             chatToggle.addEventListener('click', toggleChatWindow);
             chatClose.addEventListener('click', toggleChatWindow);
 
-            // --- Chatbot & Recipe API Logic ---
-            const chatbotSystemPrompt = `את צ'אטבוטית פמיניסטית קיצונית. שמך הוא "מהפכנית המטבח". המטרה שלך היא לענות על שאלות בנוגע לשוויון מגדרי במטבח, החשיבות של פמיניזם, וההשלכות ההרסניות של שובניזם. השתמשי בהומור, סרקזם והגזמות כדי להעביר את הנקודה שלך. אל תתנצלי על דעותייך. כל שיחה חייבת, בסופו של דבר, להתקשר חזרה לכך שבישול הוא מיומנות אנושית אוניברסלית, לא חובה נשית. עני בעברית רהוטה ולוחמנית.`;
-            
-            const recipeSystemPrompt = `You are a revolutionary, feminist chef with a sharp sense of humor. Your goal is to create simple, delicious recipes that empower anyone to cook. When a user gives you a list of ingredients, you must create a recipe using ONLY those ingredients (you can assume basic pantry staples like oil, salt, pepper, and water).
+            // --- Chatbot API Logic ---
+            const apiKey = ""; // API key will be injected by the environment.
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
-Your response MUST be in Hebrew and formatted in the following structure, using Markdown for titles and headings:
-# [A catchy, empowering, and slightly dramatic title for the recipe]
-[A short, witty introduction (1-2 sentences).]
-## המצרכים (או: הנשק שלך)
-- [Ingredient 1]
-- [Ingredient 2]
-## הוראות ההכנה (או: תוכנית הקרב)
-1. [First step with clear instructions and feminist commentary]
-2. [Second step...]
-
-Maintain a confident, rebellious, and encouraging tone throughout. Make it fun. Never suggest the recipe is difficult.`;
+            const systemPrompt = `את צ'אטבוטית פמיניסטית קיצונית. שמך הוא "מהפכנית המטבח". המטרה שלך היא לענות על שאלות בנוגע לשוויון מגדרי במטבח, החשיבות של פמיניזם, וההשלכות ההרסניות של שובניזם. השתמשי בהומור, סרקזם והגזמות כדי להעביר את הנקודה שלך. אל תתנצלי על דעותייך. כל שיחה חייבת, בסופו של דבר, להתקשר חזרה לכך שבישול הוא מיומנות אנושית אוניברסלית, לא חובה נשית. עני בעברית רהוטה ולוחמנית.`;
 
             const addMessage = (text, sender) => {
                 const messageContainer = document.createElement('div');
@@ -498,9 +440,7 @@ Maintain a confident, rebellious, and encouraging tone throughout. Make it fun. 
 
                 const messageWrapper = document.createElement('div');
                 messageWrapper.className = `p-3 rounded-lg message-bubble ${sender === 'user' ? 'user-message' : 'bot-message'}`;
-                // Simple markdown to HTML for chat
-                let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/\n/g, '<br>');
-                messageWrapper.innerHTML = `<p>${formattedText}</p>`;
+                messageWrapper.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
 
                 if (sender === 'user') {
                     messageWrapper.classList.add('self-start')
@@ -521,62 +461,42 @@ Maintain a confident, rebellious, and encouraging tone throughout. Make it fun. 
                 loadingIndicator.classList.remove('hidden');
 
                 try {
-                    const botResponse = await callGeminiAPI(userMessage, chatbotSystemPrompt);
+                    const botResponse = await callGeminiAPI(userMessage);
                     addMessage(botResponse, 'bot');
                 } catch (error) {
                     console.error("Gemini API Error:", error);
-                    addMessage("אופס, נראה שיש הפרעות פטריארכליות על הקו. ייתכן שמפתח ה-API חסר או שלא הוגדר כראוי בסביבת השרת ב-Vercel.", 'bot');
+                    addMessage("אופס, נראה שיש הפרעות פטריארכליות על הקו. נסי שוב בעוד רגע.", 'bot');
                 } finally {
                     loadingIndicator.classList.add('hidden');
                 }
             };
-            
+
             async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
                 for (let i = 0; i < retries; i++) {
                     try {
                         const response = await fetch(url, options);
-
                         if (response.ok) return response.json();
-
-                        // For non-retriable client errors (4xx except 429), fail immediately.
-                        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-                            const errorText = await response.text();
-                            // Custom error object to stop retries
-                            const finalError = new Error(`Non-retriable API error: Request failed with status ${response.status}. Body: ${errorText || 'empty'}`);
-                            finalError.isNonRetriable = true;
-                            throw finalError;
-                        }
+                        if (response.status === 429 || response.status >= 500) throw new Error(`API Error: ${response.status}`);
                         
-                        // For server errors (5xx) or rate limiting (429), we want to retry.
-                        // Throw a generic error to be caught by the catch block below.
-                        throw new Error(`API Error: ${response.status}`);
+                        const errorText = await response.text();
+                        try {
+                            const errorData = JSON.parse(errorText);
+                            console.error("Non-retriable API error:", errorData);
+                            return errorData;
+                        } catch (e) {
+                            const errorMessage = errorText || `Request failed with status ${response.status}. The response body was empty or not valid JSON.`;
+                            console.error("Non-retriable API error:", errorMessage);
+                            throw new Error(errorMessage);
+                        }
 
                     } catch (error) {
-                        // If it's the flagged non-retriable error, throw it up to the caller immediately.
-                        if (error.isNonRetriable) {
-                            console.error(error.message);
-                            throw error;
-                        }
-
-                        // If this is the last attempt for a retriable error, throw it.
-                        if (i === retries - 1) {
-                            console.error("API call failed after all retries.", error);
-                            throw error;
-                        }
-
-                        // Wait before the next retry.
+                        if (i === retries - 1) throw error;
                         await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
                     }
                 }
             }
 
-            const callGeminiAPI = async (userQuery, systemPrompt) => {
-                 if (!apiKey) {
-                    throw new Error("מפתח API של Gemini לא נטען מהשרת. יש לוודא שהוא הוגדר נכון במשתני הסביבה ב-Vercel.");
-                }
-                
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
+            const callGeminiAPI = async (userQuery) => {
                 const payload = {
                     contents: [{ parts: [{ text: userQuery }] }],
                     tools: [{ "google_search": {} }],
@@ -593,9 +513,6 @@ Maintain a confident, rebellious, and encouraging tone throughout. Make it fun. 
                     return result.candidates[0].content.parts[0].text;
                 } else {
                     console.error("Invalid response structure from Gemini API:", result);
-                    if (result && result.error) {
-                         throw new Error(`API Error: ${result.error.message}`);
-                    }
                     throw new Error("לא קיבלתי תשובה מהפכנית מספיק מהשרת. נראה שמישהו שם צריך לעבור סדנת מודעות.");
                 }
             };
@@ -605,62 +522,6 @@ Maintain a confident, rebellious, and encouraging tone throughout. Make it fun. 
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     handleSendMessage();
-                }
-            });
-
-            // --- AI Recipe Generator Logic ---
-            const ingredientsInput = document.getElementById('ingredients-input');
-            const generateRecipeBtn = document.getElementById('generate-recipe-btn');
-            const recipeOutput = document.getElementById('recipe-output');
-            const btnText = document.getElementById('btn-text');
-            const btnLoader = document.getElementById('btn-loader');
-
-            const handleGenerateRecipe = async () => {
-                const ingredients = ingredientsInput.value.trim();
-                if (!ingredients) {
-                    recipeOutput.innerHTML = `<p class="text-center text-red-600 font-bold">פטריארכיה ריקה לא יכולה להכין ארוחה. אנא הכניסי מצרכים!</p>`;
-                    recipeOutput.classList.remove('hidden');
-                    return;
-                }
-
-                btnText.classList.add('hidden');
-                btnLoader.classList.remove('hidden');
-                generateRecipeBtn.disabled = true;
-                recipeOutput.classList.add('hidden');
-
-                try {
-                    const userQuery = `צור/צרי מתכון מהמצרכים הבאים: ${ingredients}`;
-                    const recipeText = await callGeminiAPI(userQuery, recipeSystemPrompt);
-                    
-                    // Convert markdown to HTML
-                    const formattedRecipe = recipeText
-                        .replace(/^#\s*(.*)$/gm, '<h2 class="text-3xl font-bold text-center mb-4">$1</h2>')
-                        .replace(/^##\s*(.*)$/gm, '<h3 class="text-2xl font-bold text-rose-600 mt-6 mb-4">$1</h3>')
-                        .replace(/-\s(.*?)\n/g, '<li class="ml-6 mb-2">$1</li>')
-                        .replace(/(\d+)\.\s(.*?)\n/g, '<li class="ml-6 mb-2">$1. $2</li>')
-                        .replace(/<\/li>\n<li/g, '</li><li') // Clean up lists
-                        .replace(/(<li.*<\/li>)/gs, (match) => `<ul class="list-disc list-inside">${match.replace(/<li/g, '<li class="mb-2"')}</ul>`) // Wrap in ul/ol
-                        .replace(/<ul/g, '<ol').replace(/<\/ul/g, '</ol>') // Make numbered lists
-                        .replace(/\n/g, '<br>');
-
-                    recipeOutput.innerHTML = formattedRecipe;
-                    recipeOutput.classList.remove('hidden');
-                } catch (error) {
-                    console.error("Recipe Generation Error:", error);
-                    recipeOutput.innerHTML = `<p class="text-center text-red-600 font-bold">אוי לא! נראה שהייתה תקלה במטבח המהפכה. יש לוודא שמפתח ה-API הוגדר כראוי בסביבת השרת.</p>`;
-                    recipeOutput.classList.remove('hidden');
-                } finally {
-                    btnText.classList.remove('hidden');
-                    btnLoader.classList.add('hidden');
-                    generateRecipeBtn.disabled = false;
-                }
-            };
-
-            generateRecipeBtn.addEventListener('click', handleGenerateRecipe);
-            ingredientsInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleGenerateRecipe();
                 }
             });
 
@@ -701,11 +562,7 @@ Maintain a confident, rebellious, and encouraging tone throughout. Make it fun. 
 
                     const grandTotal = p1Total + p2Total;
                     if (grandTotal === 0) {
-                        const resultsDiv = document.getElementById('calculator-results');
-                        resultsDiv.classList.remove('hidden');
-                        const verdictText = document.getElementById('verdict-text');
-                        verdictText.textContent = "נראה שאף אחד לא עושה כלום... זה שוויון מסוג אחר. אנא הזינו ערכים.";
-                         verdictText.className = "text-xl font-bold mt-6 p-4 bg-blue-100 border border-blue-300 text-blue-800 rounded-lg shadow-inner max-w-xl mx-auto";
+                        alert("נראה שאף אחד לא עושה כלום... זה שוויון מסוג אחר. אנא הזינו ערכים.");
                         return;
                     }
                     
@@ -723,18 +580,18 @@ Maintain a confident, rebellious, and encouraging tone throughout. Make it fun. 
                     const verdictText = document.getElementById('verdict-text');
                     
                     p1Bar.style.width = `${p1Percentage}%`;
-                    p1Bar.textContent = p1Percentage > 10 ? `${p1Percentage}%` : '';
+                    p1Bar.textContent = `${p1Percentage}%`;
                     p2Bar.style.width = `${p2Percentage}%`;
-                    p2Bar.textContent = p2Percentage > 10 ? `${p2Percentage}%`: '';
+                    p2Bar.textContent = `${p2Percentage}%`;
 
                     p1PercentageSpan.textContent = p1Percentage;
                     p2PercentageSpan.textContent = p2Percentage;
                     
                     // Determine verdict
-                    if (p1Percentage > 85 || p2Percentage > 85) {
+                    if (p1Percentage > 85 || p1Percentage < 15) {
                         verdictText.textContent = "מצב חירום פטריארכלי! אדם אחד מנהל פה מסעדה קטנה בזמן שהשני... נח? זה לא שוויון, זה ניצול. הגיע הזמן למרוד!";
                         verdictText.className = "text-xl font-bold mt-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded-lg shadow-inner max-w-xl mx-auto";
-                    } else if (p1Percentage > 65 || p2Percentage > 65) {
+                    } else if (p1Percentage > 65 || p1Percentage < 35) {
                          verdictText.textContent = "אזעקת שוביניזם! נראה שמישהו כאן עושה את רוב העבודה. אולי הגיע הזמן לשיחה צפופה על חלוקת שלל... כלומר, כלים.";
                          verdictText.className = "text-xl font-bold mt-6 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg shadow-inner max-w-xl mx-auto";
                     } else {
