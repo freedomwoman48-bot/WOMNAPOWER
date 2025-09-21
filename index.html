@@ -470,7 +470,7 @@
             
             try {
                 // 3. Call the new streaming API endpoint.
-                const response = await fetch('/api/chat', {
+                const response = await fetch('api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
@@ -591,3 +591,4 @@
 </script>
 </body>
 </html>
+
