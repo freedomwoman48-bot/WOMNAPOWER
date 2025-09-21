@@ -386,7 +386,7 @@
 
     </main>
 
-    <!-- Chatbot -->
+    <!-- UI Buttons -->
     <div id="chatbot-container" class="fixed bottom-20 left-5 z-50">
         <!-- Chat toggle button -->
         <button id="chat-toggle" class="bg-rose-500 text-white rounded-full p-4 shadow-lg hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-transform hover:scale-110">
@@ -428,9 +428,12 @@
         <p id="ticker-text"></p>
     </footer>
 
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // This variable should be populated by your server/environment.
+            // Example: A server-side script could replace '""' with a valid key.
+            const apiKey = ""; 
+
             // --- Chatbot UI Logic ---
             const chatToggle = document.getElementById('chat-toggle');
             const chatWindow = document.getElementById('chat-window');
@@ -455,9 +458,6 @@
             chatClose.addEventListener('click', toggleChatWindow);
 
             // --- Chatbot & Recipe API Logic ---
-            const apiKey = ""; // API key will be injected by the environment.
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
             const chatbotSystemPrompt = `את צ'אטבוטית פמיניסטית קיצונית. שמך הוא "מהפכנית המטבח". המטרה שלך היא לענות על שאלות בנוגע לשוויון מגדרי במטבח, החשיבות של פמיניזם, וההשלכות ההרסניות של שובניזם. השתמשי בהומור, סרקזם והגזמות כדי להעביר את הנקודה שלך. אל תתנצלי על דעותייך. כל שיחה חייבת, בסופו של דבר, להתקשר חזרה לכך שבישול הוא מיומנות אנושית אוניברסלית, לא חובה נשית. עני בעברית רהוטה ולוחמנית.`;
             
             const recipeSystemPrompt = `You are a revolutionary, feminist chef with a sharp sense of humor. Your goal is to create simple, delicious recipes that empower anyone to cook. When a user gives you a list of ingredients, you must create a recipe using ONLY those ingredients (you can assume basic pantry staples like oil, salt, pepper, and water).
@@ -507,7 +507,7 @@ Maintain a confident, rebellious, and encouraging tone throughout. Make it fun. 
                     addMessage(botResponse, 'bot');
                 } catch (error) {
                     console.error("Gemini API Error:", error);
-                    addMessage("אופס, נראה שיש הפרעות פטריארכליות על הקו. נסי שוב בעוד רגע.", 'bot');
+                    addMessage("אופס, נראה שיש הפרעות פטריארכליות על הקו. ייתכן שמפתח ה-API חסר או שלא הוגדר כראוי בסביבת השרת.", 'bot');
                 } finally {
                     loadingIndicator.classList.add('hidden');
                 }
@@ -517,28 +517,48 @@ Maintain a confident, rebellious, and encouraging tone throughout. Make it fun. 
                 for (let i = 0; i < retries; i++) {
                     try {
                         const response = await fetch(url, options);
+
                         if (response.ok) return response.json();
-                        if (response.status === 429 || response.status >= 500) throw new Error(`API Error: ${response.status}`);
-                        
-                        const errorText = await response.text();
-                        try {
-                            const errorData = JSON.parse(errorText);
-                            console.error("Non-retriable API error:", errorData);
-                            return errorData;
-                        } catch (e) {
-                            const errorMessage = errorText || `Request failed with status ${response.status}. The response body was empty or not valid JSON.`;
-                            console.error("Non-retriable API error:", errorMessage);
-                            throw new Error(errorMessage);
+
+                        // For non-retriable client errors (4xx except 429), fail immediately.
+                        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+                            const errorText = await response.text();
+                            // Custom error object to stop retries
+                            const finalError = new Error(`Non-retriable API error: Request failed with status ${response.status}. Body: ${errorText || 'empty'}`);
+                            finalError.isNonRetriable = true;
+                            throw finalError;
                         }
+                        
+                        // For server errors (5xx) or rate limiting (429), we want to retry.
+                        // Throw a generic error to be caught by the catch block below.
+                        throw new Error(`API Error: ${response.status}`);
 
                     } catch (error) {
-                        if (i === retries - 1) throw error;
+                        // If it's the flagged non-retriable error, throw it up to the caller immediately.
+                        if (error.isNonRetriable) {
+                            console.error(error.message);
+                            throw error;
+                        }
+
+                        // If this is the last attempt for a retriable error, throw it.
+                        if (i === retries - 1) {
+                            console.error("API call failed after all retries.", error);
+                            throw error;
+                        }
+
+                        // Wait before the next retry.
                         await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
                     }
                 }
             }
 
             const callGeminiAPI = async (userQuery, systemPrompt) => {
+                 if (!apiKey) {
+                    throw new Error("מפתח API של Gemini חסר. יש להגדיר אותו בסביבת השרת.");
+                }
+                
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
                 const payload = {
                     contents: [{ parts: [{ text: userQuery }] }],
                     tools: [{ "google_search": {} }],
@@ -555,6 +575,9 @@ Maintain a confident, rebellious, and encouraging tone throughout. Make it fun. 
                     return result.candidates[0].content.parts[0].text;
                 } else {
                     console.error("Invalid response structure from Gemini API:", result);
+                    if (result && result.error) {
+                         throw new Error(`API Error: ${result.error.message}`);
+                    }
                     throw new Error("לא קיבלתי תשובה מהפכנית מספיק מהשרת. נראה שמישהו שם צריך לעבור סדנת מודעות.");
                 }
             };
@@ -606,7 +629,7 @@ Maintain a confident, rebellious, and encouraging tone throughout. Make it fun. 
                     recipeOutput.classList.remove('hidden');
                 } catch (error) {
                     console.error("Recipe Generation Error:", error);
-                    recipeOutput.innerHTML = `<p class="text-center text-red-600 font-bold">אוי לא! נראה שהייתה תקלה במטבח המהפכה. אולי השוביניזם חדר למערכת. נסה/י שוב.</p>`;
+                    recipeOutput.innerHTML = `<p class="text-center text-red-600 font-bold">אוי לא! נראה שהייתה תקלה במטבח המהפכה. יש לוודא שמפתח ה-API הוגדר כראוי בסביבת השרת.</p>`;
                     recipeOutput.classList.remove('hidden');
                 } finally {
                     btnText.classList.remove('hidden');
@@ -707,3 +730,4 @@ Maintain a confident, rebellious, and encouraging tone throughout. Make it fun. 
     </script>
 </body>
 </html>
+
