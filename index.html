@@ -429,10 +429,28 @@
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // This variable should be populated by your server/environment.
-            // Example: A server-side script could replace '""' with a valid key.
-            const apiKey = ""; 
+        document.addEventListener('DOMContentLoaded', async () => {
+            let apiKey = ''; // Will hold the key
+
+            // --- Function to fetch API key from the serverless function ---
+            const fetchApiKey = async () => {
+                try {
+                    const response = await fetch('/api/get-key');
+                    if (!response.ok) {
+                        throw new Error(`Server responded with ${response.status}`);
+                    }
+                    const data = await response.json();
+                    if (data.apiKey) {
+                        apiKey = data.apiKey;
+                    } else {
+                        console.error("API key not provided by the server endpoint.");
+                    }
+                } catch (error) {
+                    console.error("Error fetching API key:", error);
+                }
+            };
+            
+            await fetchApiKey(); // Fetch the key when the page loads
 
             // --- Chatbot UI Logic ---
             const chatToggle = document.getElementById('chat-toggle');
@@ -507,7 +525,7 @@ Maintain a confident, rebellious, and encouraging tone throughout. Make it fun. 
                     addMessage(botResponse, 'bot');
                 } catch (error) {
                     console.error("Gemini API Error:", error);
-                    addMessage("אופס, נראה שיש הפרעות פטריארכליות על הקו. ייתכן שמפתח ה-API חסר או שלא הוגדר כראוי בסביבת השרת.", 'bot');
+                    addMessage("אופס, נראה שיש הפרעות פטריארכליות על הקו. ייתכן שמפתח ה-API חסר או שלא הוגדר כראוי בסביבת השרת ב-Vercel.", 'bot');
                 } finally {
                     loadingIndicator.classList.add('hidden');
                 }
@@ -554,7 +572,7 @@ Maintain a confident, rebellious, and encouraging tone throughout. Make it fun. 
 
             const callGeminiAPI = async (userQuery, systemPrompt) => {
                  if (!apiKey) {
-                    throw new Error("מפתח API של Gemini חסר. יש להגדיר אותו בסביבת השרת.");
+                    throw new Error("מפתח API של Gemini לא נטען מהשרת. יש לוודא שהוא הוגדר נכון במשתני הסביבה ב-Vercel.");
                 }
                 
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
