@@ -405,7 +405,7 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- Chatbot UI Logic (נשאר ללא שינוי) ---
+        // --- Chatbot UI Logic ---
         const chatToggle = document.getElementById('chat-toggle');
         const chatWindow = document.getElementById('chat-window');
         const chatClose = document.getElementById('chat-close');
@@ -428,60 +428,80 @@
         chatToggle.addEventListener('click', toggleChatWindow);
         chatClose.addEventListener('click', toggleChatWindow);
         
+        // --- MODIFIED SCRIPT FOR STREAMING ---
+
+        // This function now adds a message and returns the paragraph element for future updates.
         const addMessage = (text, sender) => {
             const messageContainer = document.createElement('div');
             messageContainer.className = 'flex flex-col items-start space-y-2';
 
             const messageWrapper = document.createElement('div');
             messageWrapper.className = `p-3 rounded-lg message-bubble ${sender === 'user' ? 'user-message' : 'bot-message'}`;
-            messageWrapper.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
+            
+            const p = document.createElement('p');
+            p.innerHTML = text.replace(/\n/g, '<br>');
+            messageWrapper.appendChild(p);
 
             if (sender === 'user') {
-                messageWrapper.classList.add('self-start')
+                messageWrapper.classList.add('self-start');
             } else {
-                messageWrapper.classList.add('self-end')
+                messageWrapper.classList.add('self-end');
             }
 
             messageContainer.appendChild(messageWrapper);
             chatMessages.prepend(messageContainer);
-        };
 
-        // --- Chatbot API Logic (החלק שהשתנה) ---
-        const systemPrompt = `את צ'אטבוטית פמיניסטית קיצונית. שמך הוא "מהפכנית המטבח". המטרה שלך היא לענות על שאלות בנוגע לשוויון מגדרי במטבח, החשיבות של פמיניזם, וההשלכות ההרסניות של שובניזם. השתמשי בהומור, סרקזם והגזמות כדי להעביר את הנקודה שלך. אל תתנצלי על דעותייך. כל שיחה חייבת, בסופו של דבר, להתקשר חזרה לכך שבישול הוא מיומנות אנושית אוניברסלית, לא חובה נשית. עני בעברית רהוטה ולוחמנית.`;
-        
-        const callChatAPI = async (userQuery) => {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    message: userQuery,
-                    systemPrompt: systemPrompt 
-                })
-            });
-
-            if (!response.ok) {
-                console.error("API function error:", await response.text());
-                throw new Error("שגיאה בפנייה לשרת שלנו.");
-            }
-
-            const data = await response.json();
-            return data.reply;
+            return p; // Return the paragraph element to allow streaming into it.
         };
         
         const handleSendMessage = async () => {
             const userMessage = chatInput.value.trim();
             if (!userMessage) return;
 
+            // 1. Add the user's message to the UI.
             addMessage(userMessage, 'user');
             chatInput.value = '';
+            
+            // 2. Create a placeholder bubble for the bot's response and get its text element.
+            const botTextElement = addMessage('...', 'bot');
             loadingIndicator.classList.remove('hidden');
 
+            const systemPrompt = `את צ'אטבוטית פמיניסטית קיצונית. שמך הוא "מהפכנית המטבח". המטרה שלך היא לענות על שאלות בנוגע לשוויון מגדרי במטבח, החשיבות של פמיניזם, וההשלכות ההרסניות של שובניזם. השתמשי בהומור, סרקזם והגזמות כדי להעביר את הנקודה שלך. אל תתנצלי על דעותייך. כל שיחה חייבת, בסופו של דבר, להתקשר חזרה לכך שבישול הוא מיומנות אנושית אוניברסלית, לא חובה נשית. עני בעברית רהוטה ולוחמנית.`;
+            
             try {
-                const botResponse = await callChatAPI(userMessage);
-                addMessage(botResponse, 'bot');
+                // 3. Call the new streaming API endpoint.
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: userMessage,
+                        systemPrompt: systemPrompt 
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok: ${response.statusText}`);
+                }
+                
+                loadingIndicator.classList.add('hidden');
+                botTextElement.textContent = ''; // Clear the "..." placeholder.
+
+                // 4. Read the response as a stream.
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        break; // Exit the loop when the stream is finished.
+                    }
+                    // Decode the chunk of data and append it to the bot's message bubble.
+                    const chunk = decoder.decode(value, { stream: true });
+                    botTextElement.innerHTML += chunk.replace(/\n/g, '<br>');
+                }
             } catch (error) {
-                console.error("API Error:", error);
-                addMessage("אופס, נראה שיש הפרעות פטריארכליות על הקו. נסי שוב בעוד רגע.", 'bot');
+                console.error("API Streaming Error:", error);
+                botTextElement.textContent = "אופס, נראה שיש הפרעות פטריארכליות על הקו. נסי שוב בעוד רגע.";
             } finally {
                 loadingIndicator.classList.add('hidden');
             }
@@ -495,7 +515,7 @@
             }
         });
 
-        // --- לוגיקה של שאר העמוד (נשאר ללא שינוי) ---
+        // --- All other page logic remains unchanged ---
         const tickerText = document.getElementById('ticker-text');
         if (tickerText) {
             const phrases = ["את חמודה כשאת כועסת...", "חיוך, מה קרה?", "זה בטח 'הזמן הזה בחודש'...", "אני אעזור לך עם זה, זה כבד מדי בשבילך.", "את בטוחה שאת מבינה בזה?", "מי לימד אותך לבשל ככה? אמא שלך?", "בואי אני אסביר לך איך זה עובד באמת...", "את נוהגת לא רע... בשביל אישה.", "את לא צריכה לדאוג לדברים כאלה, יש גברים בשביל זה.", "תירגעי, זה סתם בצחוק."];
@@ -571,5 +591,3 @@
 </script>
 </body>
 </html>
-
-
